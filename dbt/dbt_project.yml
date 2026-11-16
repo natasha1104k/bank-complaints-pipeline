@@ -1,0 +1,16 @@
+name: bank_complaints
+version: "1.0.0"
+config-version: 2
+profile: bank_complaints
+
+model-paths: ["models"]
+test-paths: ["tests"]
+
+models:
+  bank_complaints:
+    staging:
+      +schema: staging
+      +materialized: view
+    marts:
+      +schema: marts
+      +materialized: table

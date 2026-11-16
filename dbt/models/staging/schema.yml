@@ -1,0 +1,8 @@
+version: 2
+models:
+  - name: stg_complaints
+    columns:
+      - name: complaint_id
+        tests: [unique, not_null]
+      - name: date_received
+        tests: [not_null]

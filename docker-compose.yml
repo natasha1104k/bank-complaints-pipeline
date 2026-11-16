@@ -1,0 +1,42 @@
+# Starts two containers:
+#   warehouse - PostgreSQL, where the data lives (localhost:5432)
+#   airflow   - the scheduler + web UI (http://localhost:8080)
+# The Airflow admin password is printed in the airflow container's logs on first start.
+services:
+  warehouse:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${WAREHOUSE_DB}
+      POSTGRES_USER: ${WAREHOUSE_USER}
+      POSTGRES_PASSWORD: ${WAREHOUSE_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - warehouse_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${WAREHOUSE_USER} -d ${WAREHOUSE_DB}"]
+      interval: 5s
+      retries: 10
+
+  airflow:
+    build: ./airflow
+    command: standalone
+    environment:
+      WAREHOUSE_HOST: warehouse
+      WAREHOUSE_PORT: 5432
+      WAREHOUSE_DB: ${WAREHOUSE_DB}
+      WAREHOUSE_USER: ${WAREHOUSE_USER}
+      WAREHOUSE_PASSWORD: ${WAREHOUSE_PASSWORD}
+      PYTHONPATH: /opt/airflow/project
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./:/opt/airflow/project
+    depends_on:
+      warehouse:
+        condition: service_healthy
+
+volumes:
+  warehouse_data:

@@ -1,0 +1,13 @@
+# Credentials come from environment variables (see .env.example), never hard-coded.
+bank_complaints:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('WAREHOUSE_HOST', 'localhost') }}"
+      port: "{{ env_var('WAREHOUSE_PORT', '5432') | int }}"
+      dbname: "{{ env_var('WAREHOUSE_DB', 'complaints') }}"
+      user: "{{ env_var('WAREHOUSE_USER', 'pipeline') }}"
+      password: "{{ env_var('WAREHOUSE_PASSWORD', '') }}"
+      schema: public
+      threads: 4

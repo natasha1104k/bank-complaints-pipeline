@@ -1,0 +1,39 @@
+# Runs on every push and pull request: unit tests, then a full load + dbt build
+# against a throwaway Postgres, so a broken model or failing data test blocks the merge.
+name: CI
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: complaints
+          POSTGRES_USER: pipeline
+          POSTGRES_PASSWORD: ci_only_password
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U pipeline -d complaints"
+          --health-interval 5s --health-retries 10
+    env:
+      WAREHOUSE_HOST: localhost
+      WAREHOUSE_PORT: 5432
+      WAREHOUSE_DB: complaints
+      WAREHOUSE_USER: pipeline
+      WAREHOUSE_PASSWORD: ci_only_password
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt joblib
+      - name: Unit tests
+        run: pytest -q
+      - name: Load sample data
+        run: python -m pipeline.run --sample tests/fixtures/sample_complaints.json
+      - name: dbt build (models + 19 data tests)
+        working-directory: dbt
+        run: dbt build --profiles-dir .

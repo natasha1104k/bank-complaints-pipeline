@@ -1,0 +1,41 @@
+version: 2
+models:
+  - name: dim_company
+    columns:
+      - name: company_key
+        tests: [unique, not_null]
+      - name: company_name
+        tests: [not_null]
+  - name: dim_product
+    columns:
+      - name: product_key
+        tests: [unique, not_null]
+  - name: dim_date
+    columns:
+      - name: date_key
+        tests: [unique, not_null]
+  - name: fct_complaints
+    columns:
+      - name: complaint_id
+        tests: [unique, not_null]
+      - name: company_key
+        tests:
+          - relationships:
+              arguments: {to: ref('dim_company'), field: company_key}
+      - name: product_key
+        tests:
+          - relationships:
+              arguments: {to: ref('dim_product'), field: product_key}
+      - name: date_key
+        tests:
+          - relationships:
+              arguments: {to: ref('dim_date'), field: date_key}
+      - name: company_response
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["Closed with explanation", "Closed with monetary relief",
+                         "Closed with non-monetary relief", "Closed with relief",
+                         "Closed without relief", "Closed", "In progress", "Untimely response"]
+      - name: is_timely
+        tests: [not_null]
